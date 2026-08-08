@@ -40,7 +40,16 @@ the styling for the userscript panels.
 
 ### 1. Install The CSS
 
-Install `BroadcastThatNet.css` as a user style for BTN.
+Add the hosted CSS URL to your BTN profile stylesheet setting:
+
+```text
+https://high-guy-uk.github.io/BTN-Sideways/BroadcastThatNet.css
+```
+
+That is served through GitHub Pages so BTN can load it directly as a stylesheet.
+
+If you prefer using a browser-side userstyle manager instead, install
+`BroadcastThatNet.css` there.
 
 Recommended match patterns:
 
