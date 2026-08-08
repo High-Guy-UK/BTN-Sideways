@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.3
+// @version      1.0.4
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -2880,7 +2880,7 @@ mod('TMDB Enricher', onSeries, function () {
   // Pick the best YouTube trailer from TMDB's videos list, falling back to
   // BTN's own embedded trailer when TMDB has no video entry for the show.
   function pickTrailer(d) {
-    const vids = (d.videos && d.videos.results) || [];
+    const vids = (d && d.videos && d.videos.results) || [];
     return vids.find(x => /^YouTube$/i.test(x.site) && x.type === 'Trailer' && x.official) ||
            vids.find(x => /^YouTube$/i.test(x.site) && x.type === 'Trailer') ||
            vids.find(x => /^YouTube$/i.test(x.site) && x.type === 'Teaser') ||
@@ -2912,7 +2912,7 @@ mod('TMDB Enricher', onSeries, function () {
     const a = el('a', 'tmx-yt-link');
     a.href = 'https://www.youtube.com/watch?v=' + encodeURIComponent(v.key);
     a.dataset.yt = v.key;
-    a.dataset.title = v.name || (d.name + ' — Trailer');
+    a.dataset.title = v.name || ((d && d.name ? d.name + ' — ' : '') + 'Trailer');
     a.title = 'Watch the trailer';
     a.innerHTML = '[<span class="tmx-yt-y">Y</span><span class="tmx-yt-rest">ouTube</span>]';
     bar.appendChild(document.createTextNode('  '));
