@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.0
+// @version      1.0.1
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -2836,31 +2836,68 @@ mod('TMDB Enricher', onSeries, function () {
     if (b) { e.preventDefault(); openTrailer(b.dataset.yt, b.dataset.title); }
   });
 
-  // Pick the best YouTube trailer from TMDB's videos list.
+  function youtubeKeyFromUrl(url) {
+    try {
+      const u = new URL(url, location.href);
+      if (/youtu\.be$/i.test(u.hostname)) return u.pathname.split('/').filter(Boolean)[0] || null;
+      if (/youtube(?:-nocookie)?\.com$/i.test(u.hostname) || /youtube(?:-nocookie)?\.com$/i.test(u.hostname.replace(/^www\./i, ''))) {
+        if (u.pathname.startsWith('/embed/')) return u.pathname.split('/').filter(Boolean)[1] || null;
+        if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/').filter(Boolean)[1] || null;
+        return u.searchParams.get('v');
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function pickEmbeddedTrailer(d) {
+    const iframe = [...document.querySelectorAll('iframe[src*="youtube.com"], iframe[src*="youtube-nocookie.com"]')]
+      .map(f => ({ key: youtubeKeyFromUrl(f.src), title: f.title || '' }))
+      .find(v => v.key);
+    if (iframe) return { site: 'YouTube', type: 'Trailer', key: iframe.key, name: iframe.title || ((d && d.name ? d.name + ' — ' : '') + 'Embedded Trailer') };
+
+    const link = [...document.querySelectorAll('a[href*="youtube.com"], a[href*="youtu.be"]')]
+      .map(a => ({ key: youtubeKeyFromUrl(a.href), title: (a.textContent || a.title || '').trim() }))
+      .find(v => v.key);
+    if (link) return { site: 'YouTube', type: 'Trailer', key: link.key, name: link.title || ((d && d.name ? d.name + ' — ' : '') + 'Trailer') };
+
+    return null;
+  }
+
+  // Pick the best YouTube trailer from TMDB's videos list, falling back to
+  // BTN's own embedded trailer when TMDB has no video entry for the show.
   function pickTrailer(d) {
     const vids = (d.videos && d.videos.results) || [];
-    return vids.find(x => x.site === 'YouTube' && x.type === 'Trailer' && x.official) ||
-           vids.find(x => x.site === 'YouTube' && x.type === 'Trailer') ||
-           vids.find(x => x.site === 'YouTube' && x.type === 'Teaser') ||
-           vids.find(x => x.site === 'YouTube');
+    return vids.find(x => /^YouTube$/i.test(x.site) && x.type === 'Trailer' && x.official) ||
+           vids.find(x => /^YouTube$/i.test(x.site) && x.type === 'Trailer') ||
+           vids.find(x => /^YouTube$/i.test(x.site) && x.type === 'Teaser') ||
+           vids.find(x => /^YouTube$/i.test(x.site)) ||
+           pickEmbeddedTrailer(d);
+  }
+
+  function getTrailerLinkbox() {
+    const link = [...document.querySelectorAll('div.linkbox a, .linkbox a')]
+      .find(a => /Add to Favorites|Notify of New Uploads|Autofill Actors|View history|Sonarr/i.test(a.textContent));
+    return link ? link.parentElement : document.querySelector('#series .linkbox, #content .linkbox, div.linkbox, .linkbox');
   }
 
   // Add a "[YouTube]" trailer link into the top action bar (.linkbox),
   // styled to match the other items with a red "Y" for eye-catch.
   function addLinkbarTrailer(d) {
-    if (!SHOW.linkbarTrailer) return;
-    const bar = document.querySelector('.linkbox');
-    if (!bar || bar.querySelector('.tmx-yt-link')) return;
+    if (!SHOW.linkbarTrailer) return true;
+    if (document.querySelector('.tmx-yt-link')) return true;
     const v = pickTrailer(d);
-    if (!v) return;
+    if (!v || !v.key) return false;
+    const bar = getTrailerLinkbox();
+    if (!bar) return false;
     const a = el('a', 'tmx-yt-link');
-    a.href = 'https://www.youtube.com/watch?v=' + v.key;
+    a.href = 'https://www.youtube.com/watch?v=' + encodeURIComponent(v.key);
     a.dataset.yt = v.key;
     a.dataset.title = v.name || (d.name + ' — Trailer');
     a.title = 'Watch the trailer';
     a.innerHTML = '[<span class="tmx-yt-y">Y</span><span class="tmx-yt-rest">ouTube</span>]';
     bar.appendChild(document.createTextNode('  '));
     bar.appendChild(a);
+    return true;
   }
 
   // Remove the "Requests" table (REQUEST NAME / VOTE / BOUNTY / ...) that sits
@@ -3022,7 +3059,7 @@ mod('TMDB Enricher', onSeries, function () {
       // 1) Append pills to the existing Series Info grid (idempotent).
       addInfoPills(data);
       // 2) "[YouTube]" trailer link in the top action bar (idempotent).
-      addLinkbarTrailer(data);
+      const trailerReady = addLinkbarTrailer(data);
       // 3) Insert the rich section above the fanart (idempotent).
       if (!document.querySelector('.tmx-box')) {
         insertAboveFanart(buildRichSection(data));
@@ -3030,7 +3067,7 @@ mod('TMDB Enricher', onSeries, function () {
       }
       // Done only once both parts are placed.
       const gridReady = !$('.btn-tmdb-info .btn-info-grid') || $('.btn-tmdb-info .btn-info-grid[data-tmdbx-done]');
-      return !!(document.querySelector('.tmx-box') && gridReady);
+      return !!(document.querySelector('.tmx-box') && gridReady && trailerReady);
     } catch (e) {
       console.error('[BTN TMDB Enricher]', e);
       toast('TMDB Enricher error: ' + e.message, true);
