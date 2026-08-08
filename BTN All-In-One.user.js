@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.2
+// @version      1.0.3
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -9,6 +9,8 @@
 // @match        http://broadcasthe.net/*
 // @match        http://*.broadcasthe.net/*
 // @icon         https://broadcasthe.net/favicon.ico
+// @updateURL    https://raw.githubusercontent.com/High-Guy-UK/BTN-Sideways/main/BTN%20All-In-One.user.js
+// @downloadURL  https://raw.githubusercontent.com/High-Guy-UK/BTN-Sideways/main/BTN%20All-In-One.user.js
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
