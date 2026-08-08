@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.1
+// @version      1.0.2
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -94,6 +94,37 @@
   function getStoredTmdbBearer() {
     return String(getStoredValue(TMDB_BEARER_STORAGE, '') || '').trim();
   }
+
+  function youtubeKeyFromUrl(url) {
+    try {
+      const u = new URL(url, location.href);
+      const host = u.hostname.replace(/^www\./i, '');
+      if (/youtu\.be$/i.test(host)) return u.pathname.split('/').filter(Boolean)[0] || null;
+      if (/youtube(?:-nocookie)?\.com$/i.test(host)) {
+        if (u.pathname.startsWith('/embed/')) return u.pathname.split('/').filter(Boolean)[1] || null;
+        if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/').filter(Boolean)[1] || null;
+        return u.searchParams.get('v');
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  function findPageYoutubeTrailer() {
+    const iframe = [...document.querySelectorAll('iframe[src*="youtube.com"], iframe[src*="youtube-nocookie.com"]')]
+      .map(f => ({ key: youtubeKeyFromUrl(f.src), title: f.title || '' }))
+      .find(v => v.key);
+    if (iframe) return { site: 'YouTube', type: 'Trailer', key: iframe.key, name: iframe.title || 'Embedded Trailer' };
+
+    const link = [...document.querySelectorAll('a[href*="youtube.com"], a[href*="youtu.be"]')]
+      .map(a => ({ key: youtubeKeyFromUrl(a.href), title: (a.textContent || a.title || '').trim() }))
+      .find(v => v.key);
+    if (link) return { site: 'YouTube', type: 'Trailer', key: link.key, name: link.title || 'Trailer' };
+
+    return null;
+  }
+
+  // Grab BTN's own trailer before later modules hide or move panels around.
+  const INITIAL_PAGE_YOUTUBE_TRAILER = findPageYoutubeTrailer();
 
 
 /* =============================================================================
@@ -2836,31 +2867,12 @@ mod('TMDB Enricher', onSeries, function () {
     if (b) { e.preventDefault(); openTrailer(b.dataset.yt, b.dataset.title); }
   });
 
-  function youtubeKeyFromUrl(url) {
-    try {
-      const u = new URL(url, location.href);
-      if (/youtu\.be$/i.test(u.hostname)) return u.pathname.split('/').filter(Boolean)[0] || null;
-      if (/youtube(?:-nocookie)?\.com$/i.test(u.hostname) || /youtube(?:-nocookie)?\.com$/i.test(u.hostname.replace(/^www\./i, ''))) {
-        if (u.pathname.startsWith('/embed/')) return u.pathname.split('/').filter(Boolean)[1] || null;
-        if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/').filter(Boolean)[1] || null;
-        return u.searchParams.get('v');
-      }
-    } catch (e) {}
-    return null;
-  }
-
   function pickEmbeddedTrailer(d) {
-    const iframe = [...document.querySelectorAll('iframe[src*="youtube.com"], iframe[src*="youtube-nocookie.com"]')]
-      .map(f => ({ key: youtubeKeyFromUrl(f.src), title: f.title || '' }))
-      .find(v => v.key);
-    if (iframe) return { site: 'YouTube', type: 'Trailer', key: iframe.key, name: iframe.title || ((d && d.name ? d.name + ' — ' : '') + 'Embedded Trailer') };
-
-    const link = [...document.querySelectorAll('a[href*="youtube.com"], a[href*="youtu.be"]')]
-      .map(a => ({ key: youtubeKeyFromUrl(a.href), title: (a.textContent || a.title || '').trim() }))
-      .find(v => v.key);
-    if (link) return { site: 'YouTube', type: 'Trailer', key: link.key, name: link.title || ((d && d.name ? d.name + ' — ' : '') + 'Trailer') };
-
-    return null;
+    const v = INITIAL_PAGE_YOUTUBE_TRAILER || findPageYoutubeTrailer();
+    if (!v) return null;
+    return Object.assign({}, v, {
+      name: v.name || ((d && d.name ? d.name + ' — ' : '') + 'Trailer')
+    });
   }
 
   // Pick the best YouTube trailer from TMDB's videos list, falling back to
@@ -2875,6 +2887,12 @@ mod('TMDB Enricher', onSeries, function () {
   }
 
   function getTrailerLinkbox() {
+    const sonarr = document.getElementById('sonarr-linkbox-link');
+    if (sonarr && sonarr.parentElement) return sonarr.parentElement;
+
+    const direct = document.querySelector('#series .thin > .linkbox, #content .thin > .linkbox, .thin > .linkbox');
+    if (direct) return direct;
+
     const link = [...document.querySelectorAll('div.linkbox a, .linkbox a')]
       .find(a => /Add to Favorites|Notify of New Uploads|Autofill Actors|View history|Sonarr/i.test(a.textContent));
     return link ? link.parentElement : document.querySelector('#series .linkbox, #content .linkbox, div.linkbox, .linkbox');
@@ -2898,6 +2916,14 @@ mod('TMDB Enricher', onSeries, function () {
     bar.appendChild(document.createTextNode('  '));
     bar.appendChild(a);
     return true;
+  }
+
+  function watchTrailerLink(d) {
+    let tries = 0;
+    const iv = setInterval(() => {
+      addLinkbarTrailer(d);
+      if (document.querySelector('.tmx-yt-link') || ++tries > 30) clearInterval(iv);
+    }, 500);
   }
 
   // Remove the "Requests" table (REQUEST NAME / VOTE / BOUNTY / ...) that sits
@@ -3047,9 +3073,10 @@ mod('TMDB Enricher', onSeries, function () {
   }
 
   async function run() {
+    const pageTrailerReady = addLinkbarTrailer(null);
     if (keyMissing()) {
       toast('TMDB Enricher: add your API key via the Tampermonkey menu → "Set TMDB API key".', true);
-      return true; // nothing more to retry
+      return pageTrailerReady; // keep retrying briefly if only the linkbox is late
     }
     try {
       if (SHOW.hideRequestsTable) removeRequestsTable();
@@ -3060,6 +3087,7 @@ mod('TMDB Enricher', onSeries, function () {
       addInfoPills(data);
       // 2) "[YouTube]" trailer link in the top action bar (idempotent).
       const trailerReady = addLinkbarTrailer(data);
+      watchTrailerLink(data);
       // 3) Insert the rich section above the fanart (idempotent).
       if (!document.querySelector('.tmx-box')) {
         insertAboveFanart(buildRichSection(data));
