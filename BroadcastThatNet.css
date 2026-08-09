@@ -5505,7 +5505,9 @@ body:has(#lightbox[style*="display: block"]) #content{
   color:var(--swift-secondary) !important;
   font-size:.84rem !important;
   font-weight:560 !important;
+  letter-spacing:normal !important;
   line-height:1.3 !important;
+  text-transform:none !important;
 }
 
 #series .thin .main_column>.torrent_table>tbody>tr.group_torrent:nth-child(even of .group_torrent),
@@ -5520,7 +5522,9 @@ body:has(#lightbox[style*="display: block"]) #content{
   color:inherit !important;
   font-size:.84rem !important;
   font-weight:560 !important;
+  letter-spacing:normal !important;
   line-height:1.3 !important;
+  text-transform:none !important;
   vertical-align:middle !important;
 }
 
@@ -5531,12 +5535,16 @@ body:has(#lightbox[style*="display: block"]) #content{
 #series .thin .main_column>.torrent_table>tbody>tr.group_torrent>td :is(a,span,div,b,strong,em),
 #content:has(.main_column>table#discog_table) .thin .main_column>.torrent_table>tbody>tr.group_torrent>td :is(a,span,div,b,strong,em){
   font-size:.84rem !important;
+  letter-spacing:normal !important;
   line-height:1.3 !important;
+  text-transform:none !important;
 }
 
 #series .thin .main_column>.torrent_table>tbody>tr.group_torrent>td :is(.MKV,.AVI,.MP4,.M4V,.TS,.MPEG,.Internal,.Scene,.P2P,.User),
 #content:has(.main_column>table#discog_table) .thin .main_column>.torrent_table>tbody>tr.group_torrent>td :is(.MKV,.AVI,.MP4,.M4V,.TS,.MPEG,.Internal,.Scene,.P2P,.User){
   font-size:.84rem !important;
   font-weight:720 !important;
+  letter-spacing:normal !important;
   line-height:1.3 !important;
+  text-transform:none !important;
 }
