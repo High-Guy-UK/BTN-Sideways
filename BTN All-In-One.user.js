@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.10
+// @version      1.0.11
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -707,6 +707,17 @@ mod('Series Page Declutter', onSeries, function () {
         // ---- relocate shown top panels into the main column ------------------
         const fanArt = [...mainCol.children].find(c => /Series Fan Art/.test(headText(c)));
         const targetOrder = fanArt ? (getComputedStyle(fanArt).order || FALLBACK_ORDER) : FALLBACK_ORDER;
+        const collector = [...sidebar.children].find(c => /Series Collector/.test(headText(c)));
+
+        if (collector) {
+            collector.classList.add('btn-series-collector');
+            collector.style.setProperty('position', 'static', 'important');
+            collector.style.setProperty('width', 'auto', 'important');
+            collector.style.setProperty('max-width', 'none', 'important');
+            collector.style.setProperty('order', '4', 'important');
+            if (fanArt) mainCol.insertBefore(collector, fanArt);
+            else mainCol.appendChild(collector);
+        }
 
         toRelocate.forEach(box => {
             box.style.setProperty('position', 'static', 'important');

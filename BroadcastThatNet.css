@@ -5260,3 +5260,138 @@ body:has(#lightbox[style*="display: block"]) #content{
   overflow-wrap:anywhere !important;
   word-break:normal !important;
 }
+
+/* Wide Series Collector: place the native BTN downloader between TMDB and Fan Art. */
+#series .thin .main_column>.tmx-box,
+#content:has(.main_column>table#discog_table) .thin .main_column>.tmx-box{
+  order:3 !important;
+}
+
+#series .thin .main_column>.btn-series-collector,
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector{
+  order:4 !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:1px solid rgba(255,255,255,0.12) !important;
+  border-radius:10px !important;
+  background:linear-gradient(180deg,rgba(255,255,255,0.045),rgba(255,255,255,0.018)) !important;
+  box-shadow:0 1px 0 rgba(255,255,255,0.07) inset,0 16px 34px rgba(0,0,0,0.18) !important;
+  overflow:hidden !important;
+}
+
+#series .thin .main_column>.btn-series-collector>.head,
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector>.head{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  min-height:46px !important;
+  margin:0 !important;
+  padding:12px 18px !important;
+  border-bottom:1px solid rgba(255,255,255,0.08) !important;
+  background:transparent !important;
+  color:var(--swift-text) !important;
+  font-size:1rem !important;
+  font-weight:800 !important;
+  letter-spacing:0 !important;
+  text-transform:none !important;
+}
+
+#series .thin .main_column>.btn-series-collector>form,
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector>form{
+  display:block !important;
+  margin:0 !important;
+  padding:14px 18px 16px !important;
+}
+
+#series .thin .main_column>.btn-series-collector table,
+#series .thin .main_column>.btn-series-collector tbody,
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector table,
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector tbody{
+  display:grid !important;
+  grid-template-columns:repeat(auto-fit,minmax(170px,1fr)) !important;
+  gap:8px !important;
+  width:100% !important;
+  border:0 !important;
+  background:transparent !important;
+}
+
+#series .thin .main_column>.btn-series-collector tr,
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector tr{
+  display:grid !important;
+  grid-template-columns:minmax(62px,max-content) minmax(0,1fr) !important;
+  align-items:center !important;
+  gap:10px !important;
+  min-height:42px !important;
+  padding:7px 10px !important;
+  border:1px solid rgba(255,255,255,0.08) !important;
+  border-radius:8px !important;
+  background:rgba(7,12,19,0.56) !important;
+  box-shadow:0 1px 0 rgba(255,255,255,0.045) inset !important;
+}
+
+#series .thin .main_column>.btn-series-collector td,
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector td{
+  display:block !important;
+  width:auto !important;
+  min-width:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  vertical-align:middle !important;
+}
+
+#series .thin .main_column>.btn-series-collector td:first-child,
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector td:first-child{
+  color:var(--swift-tertiary) !important;
+  font-size:.72rem !important;
+  font-weight:820 !important;
+  letter-spacing:.055em !important;
+  text-transform:uppercase !important;
+}
+
+#series .thin .main_column>.btn-series-collector select,
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector select{
+  width:100% !important;
+  min-width:0 !important;
+  min-height:34px !important;
+  padding:5px 9px !important;
+  border:1px solid rgba(255,255,255,0.11) !important;
+  border-radius:7px !important;
+  background:#0a1017 !important;
+  color:var(--swift-text) !important;
+  font-size:.86rem !important;
+}
+
+#series .thin .main_column>.btn-series-collector input[type="checkbox"],
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector input[type="checkbox"]{
+  accent-color:#14b8e8 !important;
+  width:16px !important;
+  height:16px !important;
+}
+
+#series .thin .main_column>.btn-series-collector tr:has(input[type="submit"]),
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector tr:has(input[type="submit"]){
+  display:flex !important;
+  grid-column:1 / -1 !important;
+  justify-content:flex-end !important;
+  min-height:0 !important;
+  padding:4px 0 0 !important;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+#series .thin .main_column>.btn-series-collector input[type="submit"],
+#content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector input[type="submit"]{
+  min-height:36px !important;
+  padding:7px 18px !important;
+  border:1px solid rgba(20,184,232,0.48) !important;
+  border-radius:8px !important;
+  background:linear-gradient(180deg,rgba(20,184,232,0.25),rgba(20,184,232,0.12)) !important;
+  color:var(--swift-text) !important;
+  font-size:.86rem !important;
+  font-weight:800 !important;
+  cursor:pointer !important;
+}
