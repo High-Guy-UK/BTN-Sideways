@@ -5478,3 +5478,56 @@ body:has(#lightbox[style*="display: block"]) #content{
     grid-template-columns:1fr !important;
   }
 }
+
+/* Series season tables: keep headers separate from torrent row striping. */
+#series .thin .main_column>.torrent_table>tbody>tr.colhead_dark,
+#content:has(.main_column>table#discog_table) .thin .main_column>.torrent_table>tbody>tr.colhead_dark{
+  background:#101720 !important;
+  border-color:rgba(255,255,255,0.09) !important;
+}
+
+#series .thin .main_column>.torrent_table>tbody>tr.colhead_dark>td,
+#content:has(.main_column>table#discog_table) .thin .main_column>.torrent_table>tbody>tr.colhead_dark>td{
+  padding:12px 14px !important;
+  border-color:rgba(255,255,255,0.09) !important;
+  background:transparent !important;
+  color:var(--swift-tertiary) !important;
+  font-size:.72rem !important;
+  font-weight:840 !important;
+  letter-spacing:.07em !important;
+  line-height:1.2 !important;
+  text-transform:uppercase !important;
+}
+
+#series .thin .main_column>.torrent_table>tbody>tr.group_torrent,
+#content:has(.main_column>table#discog_table) .thin .main_column>.torrent_table>tbody>tr.group_torrent{
+  background:var(--swift-card) !important;
+  color:var(--swift-secondary) !important;
+  font-size:.92rem !important;
+  font-weight:650 !important;
+  line-height:1.35 !important;
+}
+
+#series .thin .main_column>.torrent_table>tbody>tr.group_torrent:nth-child(even of .group_torrent),
+#content:has(.main_column>table#discog_table) .thin .main_column>.torrent_table>tbody>tr.group_torrent:nth-child(even of .group_torrent){
+  background:var(--swift-card-2) !important;
+}
+
+#series .thin .main_column>.torrent_table>tbody>tr.group_torrent>td,
+#content:has(.main_column>table#discog_table) .thin .main_column>.torrent_table>tbody>tr.group_torrent>td{
+  border-color:rgba(255,255,255,0.075) !important;
+  background:transparent !important;
+  color:inherit !important;
+  font-size:.92rem !important;
+  font-weight:650 !important;
+  line-height:1.35 !important;
+  vertical-align:middle !important;
+}
+
+#series .thin .main_column>.torrent_table>tbody>tr.group_torrent.first>td,
+#content:has(.main_column>table#discog_table) .thin .main_column>.torrent_table>tbody>tr.group_torrent.first>td,
+#series .thin .main_column>.torrent_table>tbody>tr.group_torrent>td :is(a,span,div),
+#content:has(.main_column>table#discog_table) .thin .main_column>.torrent_table>tbody>tr.group_torrent>td :is(a,span,div){
+  font-size:.92rem !important;
+  line-height:1.35 !important;
+}
