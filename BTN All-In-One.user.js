@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.8
+// @version      1.0.9
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -113,7 +113,7 @@
     const compact = raw.toLowerCase().replace(/[\s_-]+/g, '');
     if (raw === '1' || /^(collapsed|collapse|closed|close)$/.test(compact)) return 'collapsed';
     if (raw === '2' || /^(open|opened|allopen|openall)$/.test(compact)) return 'open';
-    if (raw === '3' || /^(latest|latestseason|latestonly|latestseasononly)$/.test(compact)) return 'latestSeason';
+    if (raw === '3' || /^(latest|latestseason|latestonly|latestseasononly|openlatestseason|openlatestseasononly)$/.test(compact)) return 'latestSeason';
     return normalizeTorrentTableMode(raw, '');
   }
 
@@ -728,31 +728,27 @@ mod('Series Page Declutter', onSeries, function () {
         injectStyle();
     }
 
-    function nearbyTableText(table) {
-        const bits = [];
-        const add = el => {
+    function tableSeasonNumber(table) {
+        const textParts = [];
+        const addText = el => {
             if (!el) return;
             const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
-            if (text) bits.push(text);
+            if (text) textParts.push(text);
         };
 
-        add(table.caption);
-        add(table.querySelector('caption, th'));
-        add(table.parentElement && table.parentElement.querySelector('.head'));
+        const toggle = table.querySelector('a.toggle');
+        addText(toggle && toggle.closest('tr'));
+        addText(table.querySelector('caption'));
+        addText(table.querySelector('tr'));
+        table.querySelectorAll('tr.group_torrent').forEach(addText);
 
-        let prev = table.previousElementSibling;
-        for (let i = 0; prev && i < 4; i++, prev = prev.previousElementSibling) {
-            add(prev);
-            if (/Season\s+\d+|Specials|Other/i.test(prev.textContent || '')) break;
-        }
+        const text = textParts.join(' ');
+        const nums = [];
+        for (const m of text.matchAll(/\bSeason\s+(\d+)\b/gi)) nums.push(Number(m[1]));
+        for (const m of text.matchAll(/\bS(\d{1,2})E\d{1,3}\b/gi)) nums.push(Number(m[1]));
 
-        return bits.join(' ');
-    }
-
-    function tableSeasonNumber(table) {
-        const text = nearbyTableText(table);
-        const match = text.match(/\bSeason\s+(\d+)\b/i);
-        return match ? Number(match[1]) : null;
+        const valid = nums.filter(n => Number.isFinite(n) && n > 0);
+        return valid.length ? Math.max(...valid) : null;
     }
 
     function setupTorrentTables() {
