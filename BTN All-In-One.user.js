@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.12
+// @version      1.0.13
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -769,6 +769,15 @@ mod('Series Page Declutter', onSeries, function () {
             controls.appendChild(label);
             row.remove();
         });
+
+        const submitRow = [...form.querySelectorAll('tr')].find(tr => tr.querySelector('input[type="submit"]'));
+        const submit = submitRow && submitRow.querySelector('input[type="submit"]');
+        if (submit) {
+            submit.classList.add('btn-collector-download');
+            submit.setAttribute('form', form.id);
+            controls.appendChild(submit);
+            submitRow.remove();
+        }
 
         if (controls.children.length) head.appendChild(controls);
     }
