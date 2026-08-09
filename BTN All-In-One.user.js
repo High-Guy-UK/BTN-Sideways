@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.4
+// @version      1.0.5
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -125,8 +125,29 @@
     return null;
   }
 
+  function findPageDiscussLink() {
+    const boxes = [...document.querySelectorAll('.box, .sidebar > *')];
+
+    for (const box of boxes) {
+      const head = (box.querySelector('.head')?.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!/Discuss/i.test(head)) continue;
+
+      const link = [...box.querySelectorAll('a[href]')]
+        .find(a => !/^javascript:/i.test(a.getAttribute('href') || ''));
+      if (link) {
+        return {
+          href: link.href,
+          title: (link.textContent || link.title || 'Discuss').replace(/\s+/g, ' ').trim()
+        };
+      }
+    }
+
+    return null;
+  }
+
   // Grab BTN's own trailer before later modules hide or move panels around.
   const INITIAL_PAGE_YOUTUBE_TRAILER = findPageYoutubeTrailer();
+  const INITIAL_PAGE_DISCUSS_LINK = findPageDiscussLink();
 
 
 /* =============================================================================
@@ -2900,6 +2921,33 @@ mod('TMDB Enricher', onSeries, function () {
     return link ? link.parentElement : document.querySelector('#series .linkbox, #content .linkbox, div.linkbox, .linkbox');
   }
 
+  function pickDiscussLink() {
+    return INITIAL_PAGE_DISCUSS_LINK || findPageDiscussLink();
+  }
+
+  function addLinkbarDiscuss() {
+    if (document.querySelector('.tmx-discuss-link')) return true;
+    const d = pickDiscussLink();
+    if (!d || !d.href) return false;
+    const bar = getTrailerLinkbox();
+    if (!bar) return false;
+
+    const a = el('a', 'tmx-discuss-link');
+    a.href = d.href;
+    a.title = 'Open the series discussion';
+    a.textContent = '[Discuss]';
+
+    const yt = bar.querySelector('.tmx-yt-link');
+    if (yt) {
+      bar.insertBefore(a, yt);
+      bar.insertBefore(document.createTextNode('  '), yt);
+    } else {
+      bar.appendChild(document.createTextNode('  '));
+      bar.appendChild(a);
+    }
+    return true;
+  }
+
   // Add a "[YouTube]" trailer link into the top action bar (.linkbox),
   // styled to match the other items with a red "Y" for eye-catch.
   function addLinkbarTrailer(d) {
@@ -2923,8 +2971,11 @@ mod('TMDB Enricher', onSeries, function () {
   function watchTrailerLink(d) {
     let tries = 0;
     const iv = setInterval(() => {
+      addLinkbarDiscuss();
       addLinkbarTrailer(d);
-      if (document.querySelector('.tmx-yt-link') || ++tries > 30) clearInterval(iv);
+      const discussReady = document.querySelector('.tmx-discuss-link');
+      const trailerReady = document.querySelector('.tmx-yt-link');
+      if ((discussReady && trailerReady) || ++tries > 30) clearInterval(iv);
     }, 500);
   }
 
@@ -3016,6 +3067,8 @@ mod('TMDB Enricher', onSeries, function () {
     .tmx-cast-role { opacity:.65; line-height:1.2; }
     .tmx-art a { flex:0 0 auto; }
     .tmx-art img { height:110px; width:auto; border-radius:6px; display:block; }
+    .tmx-discuss-link { cursor:pointer; font-weight:700 !important; text-decoration:none; white-space:nowrap; }
+    .tmx-discuss-link:hover { text-decoration:underline; }
     .tmx-yt-link { cursor:pointer; font-weight:700 !important; text-decoration:none; white-space:nowrap; }
     .tmx-yt-link .tmx-yt-y { color:#ff0000 !important; }
     .tmx-yt-link .tmx-yt-rest { color:#ffffff !important; }
@@ -3075,10 +3128,11 @@ mod('TMDB Enricher', onSeries, function () {
   }
 
   async function run() {
+    const discussReady = addLinkbarDiscuss();
     const pageTrailerReady = addLinkbarTrailer(null);
     if (keyMissing()) {
       toast('TMDB Enricher: add your API key via the Tampermonkey menu → "Set TMDB API key".', true);
-      return pageTrailerReady; // keep retrying briefly if only the linkbox is late
+      return discussReady && pageTrailerReady; // keep retrying briefly if only the linkbox is late
     }
     try {
       if (SHOW.hideRequestsTable) removeRequestsTable();
@@ -3087,7 +3141,8 @@ mod('TMDB Enricher', onSeries, function () {
       insertHero(data);
       // 1) Append pills to the existing Series Info grid (idempotent).
       addInfoPills(data);
-      // 2) "[YouTube]" trailer link in the top action bar (idempotent).
+      // 2) "[Discuss]" and "[YouTube]" links in the top action bar (idempotent).
+      const finalDiscussReady = addLinkbarDiscuss();
       const trailerReady = addLinkbarTrailer(data);
       watchTrailerLink(data);
       // 3) Insert the rich section above the fanart (idempotent).
@@ -3097,7 +3152,7 @@ mod('TMDB Enricher', onSeries, function () {
       }
       // Done only once both parts are placed.
       const gridReady = !$('.btn-tmdb-info .btn-info-grid') || $('.btn-tmdb-info .btn-info-grid[data-tmdbx-done]');
-      return !!(document.querySelector('.tmx-box') && gridReady && trailerReady);
+      return !!(document.querySelector('.tmx-box') && gridReady && finalDiscussReady && trailerReady);
     } catch (e) {
       console.error('[BTN TMDB Enricher]', e);
       toast('TMDB Enricher error: ' + e.message, true);
