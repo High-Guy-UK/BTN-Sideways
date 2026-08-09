@@ -23,7 +23,8 @@ the script can continue.
 - Front page tidy-up with unread/collapse handling for the main news post.
 - TMDB trending shows on the front page.
 - Show/hide toggle for the torrents search table.
-- Series page declutter, including a rebuilt Series Info panel.
+- Series page declutter, including a rebuilt Series Info panel and configurable
+  torrent table defaults.
 - One-line torrent details for easier scanning.
 - Fanart.tv ClearLogo support.
 - TMDB recommended shows.
@@ -88,15 +89,29 @@ If both are set, the bearer token is used first.
 TMDB is used by the Trending Shows, Recommended Shows, and TMDB Enricher
 modules. Those modules skip themselves if no TMDB key is set.
 
-### 4. Optional: Configure Sonarr
+### 4. Optional: Set Torrent Table Default
+
+Series torrent tables can start collapsed, fully open, or with only the latest
+season open. Change this from the Tampermonkey menu:
+
+1. Open any BTN page where the userscript is active.
+2. Click the Tampermonkey extension icon.
+3. Open the menu for `BTN All-In-One`.
+4. Choose `Set torrent table default`.
+5. Pick collapsed, open, or latest season only.
+
+### 5. Optional: Configure Sonarr
 
 On a BTN series page, click the `[Sonarr]` action link and add your Sonarr
 server URL and API key. Multiple servers are supported.
 
 ## Tweaking
 
-The userscript is split into numbered modules. The two most useful places to
-edit are:
+The most common settings are available from the Tampermonkey menu, including
+the TMDB API key and the series torrent table default.
+
+For deeper changes, the userscript is split into numbered modules. The two most
+useful places to edit are:
 
 - `CONFIG` in `Series Page Declutter`, for showing or hiding series-page panels.
 - `SHOW` in `TMDB Enricher`, for enabling optional TMDB sections such as cast,

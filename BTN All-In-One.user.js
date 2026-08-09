@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.7
+// @version      1.0.8
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -83,10 +83,66 @@
 
   const TMDB_API_KEY_STORAGE = 'tmdb_api_key';
   const TMDB_BEARER_STORAGE = 'tmdb_bearer';
+  const TORRENT_TABLE_MODE_STORAGE = 'btn_torrent_table_mode';
+  const TORRENT_TABLE_MODE_LABELS = {
+    collapsed: 'Collapse all tables',
+    open: 'Open all tables',
+    latestSeason: 'Open latest season only',
+  };
 
   function getStoredValue(key, fallback) {
     try { return GM_getValue(key, fallback); }
     catch (e) { return fallback; }
+  }
+
+  function setStoredValue(key, value) {
+    try { GM_setValue(key, value); }
+    catch (e) {}
+  }
+
+  function normalizeTorrentTableMode(value, fallback) {
+    return Object.prototype.hasOwnProperty.call(TORRENT_TABLE_MODE_LABELS, value) ? value : fallback;
+  }
+
+  function getStoredTorrentTableMode(fallback) {
+    return normalizeTorrentTableMode(String(getStoredValue(TORRENT_TABLE_MODE_STORAGE, '') || ''), fallback);
+  }
+
+  function parseTorrentTableMode(value) {
+    const raw = String(value || '').trim();
+    const compact = raw.toLowerCase().replace(/[\s_-]+/g, '');
+    if (raw === '1' || /^(collapsed|collapse|closed|close)$/.test(compact)) return 'collapsed';
+    if (raw === '2' || /^(open|opened|allopen|openall)$/.test(compact)) return 'open';
+    if (raw === '3' || /^(latest|latestseason|latestonly|latestseasononly)$/.test(compact)) return 'latestSeason';
+    return normalizeTorrentTableMode(raw, '');
+  }
+
+  function registerTorrentTableModeMenu() {
+    if (typeof GM_registerMenuCommand !== 'function') return;
+    const currentMode = getStoredTorrentTableMode('latestSeason');
+
+    GM_registerMenuCommand('Set torrent table default: ' + TORRENT_TABLE_MODE_LABELS[currentMode], () => {
+      const current = getStoredTorrentTableMode('latestSeason');
+      const choice = prompt(
+        'Torrent table default on series pages:\n\n' +
+        '1 = Collapse all tables\n' +
+        '2 = Open all tables\n' +
+        '3 = Open latest season only\n\n' +
+        'Current: ' + TORRENT_TABLE_MODE_LABELS[current] + '\n\n' +
+        'Enter 1, 2, 3, collapsed, open, or latestSeason:',
+        current
+      );
+      if (choice == null) return;
+
+      const mode = parseTorrentTableMode(choice);
+      if (!mode) {
+        alert('Unknown torrent table setting. Use 1, 2, 3, collapsed, open, or latestSeason.');
+        return;
+      }
+
+      setStoredValue(TORRENT_TABLE_MODE_STORAGE, mode);
+      location.reload();
+    });
   }
 
   function getStoredTmdbApiKey() {
@@ -127,6 +183,7 @@
 
   // Grab BTN's own trailer before later modules hide or move panels around.
   const INITIAL_PAGE_YOUTUBE_TRAILER = findPageYoutubeTrailer();
+  registerTorrentTableModeMenu();
 
 
 /* =============================================================================
@@ -512,8 +569,8 @@ mod('Search Table Toggle', onTorrents, function () {
 /* =============================================================================
  * 5. BTN Series Page Declutter  (v2.1)
  *    Cleans up series pages: hides the broken stacked info block, lets you
- *    toggle each panel on/off, pulls the Series Summary to the top, collapses
- *    the season tables by default, and rebuilds the Series Info box as a compact
+ *    toggle each panel on/off, pulls the Series Summary to the top, controls
+ *    the season table default state, and rebuilds the Series Info box as a compact
  *    TMDB-style panel (pills, country flags, network logos) placed below the
  *    tables and above the fan art.
  * ========================================================================== */
@@ -549,7 +606,7 @@ mod('Series Page Declutter', onSeries, function () {
         // ---- Layout / style tweaks --------------------------------------------
         moveSummaryToTop:   true,   // Put the Series Summary at the very top of the main area
         removeTopGap:       true,   // Remove the empty space the stacked block used to reserve
-        collapseTables:     true,   // Start the Season/Other tables collapsed; click (show) to expand
+        torrentTableMode:   getStoredTorrentTableMode('latestSeason'), // 'collapsed', 'open', or 'latestSeason'
         styleSeriesInfo:    true,   // Rebuild the Series Info box as a TMDB-style pill panel
     };
 
@@ -665,38 +722,87 @@ mod('Series Page Declutter', onSeries, function () {
             }
         });
 
-        // ---- collapse the season / other tables ------------------------------
-        if (CONFIG.collapseTables) {
-            [...document.querySelectorAll('table#discog_table')]
-                .filter(t => t.querySelector('a.toggle'))
-                .forEach(table => {
-                    const link = table.querySelector('a.toggle');
-                    if (!link || link.dataset.btnBound) return;   // don't double-bind
-
-                    const rows = [...table.querySelectorAll('tr.group_torrent')];
-                    const setHidden = hide => rows.forEach(r =>
-                        r.style.setProperty('display', hide ? 'none' : '', hide ? 'important' : ''));
-
-                    // The site's built-in toggle is broken (flips the label but
-                    // never hides the rows), so replace it with a working handler.
-                    const fresh = link.cloneNode(true);
-                    link.replaceWith(fresh);
-                    fresh.dataset.btnBound = '1';
-
-                    setHidden(true);                 // collapsed by default
-                    fresh.textContent = 'show';
-
-                    fresh.addEventListener('click', e => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const hidden = rows[0] && getComputedStyle(rows[0]).display === 'none';
-                        setHidden(!hidden);
-                        fresh.textContent = hidden ? 'hide' : 'show';
-                    });
-                });
-        }
+        // ---- season / other table default state ------------------------------
+        setupTorrentTables();
 
         injectStyle();
+    }
+
+    function nearbyTableText(table) {
+        const bits = [];
+        const add = el => {
+            if (!el) return;
+            const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+            if (text) bits.push(text);
+        };
+
+        add(table.caption);
+        add(table.querySelector('caption, th'));
+        add(table.parentElement && table.parentElement.querySelector('.head'));
+
+        let prev = table.previousElementSibling;
+        for (let i = 0; prev && i < 4; i++, prev = prev.previousElementSibling) {
+            add(prev);
+            if (/Season\s+\d+|Specials|Other/i.test(prev.textContent || '')) break;
+        }
+
+        return bits.join(' ');
+    }
+
+    function tableSeasonNumber(table) {
+        const text = nearbyTableText(table);
+        const match = text.match(/\bSeason\s+(\d+)\b/i);
+        return match ? Number(match[1]) : null;
+    }
+
+    function setupTorrentTables() {
+        const tables = [...document.querySelectorAll('table#discog_table')]
+            .filter(t => t.querySelector('a.toggle'));
+        if (!tables.length) return;
+
+        const mode = /^(collapsed|open|latestSeason)$/.test(CONFIG.torrentTableMode)
+            ? CONFIG.torrentTableMode
+            : 'collapsed';
+
+        const seasonNumbers = tables.map(tableSeasonNumber);
+        const latestSeason = Math.max(...seasonNumbers.filter(n => Number.isFinite(n) && n > 0));
+        const fallbackLatest = tables[0];
+
+        tables.forEach((table, index) => {
+            const link = table.querySelector('a.toggle');
+            if (!link || link.dataset.btnBound) return;   // don't double-bind
+
+            const rows = [...table.querySelectorAll('tr.group_torrent')];
+            const setHidden = hide => rows.forEach(r =>
+                r.style.setProperty('display', hide ? 'none' : '', hide ? 'important' : ''));
+
+            // The site's built-in toggle is broken (flips the label but
+            // never hides the rows), so replace it with a working handler.
+            const fresh = link.cloneNode(true);
+            link.replaceWith(fresh);
+            fresh.dataset.btnBound = '1';
+
+            let startHidden = true;
+            if (mode === 'open') {
+                startHidden = false;
+            } else if (mode === 'latestSeason') {
+                const seasonNo = seasonNumbers[index];
+                startHidden = Number.isFinite(latestSeason)
+                    ? seasonNo !== latestSeason
+                    : table !== fallbackLatest;
+            }
+
+            setHidden(startHidden);
+            fresh.textContent = startHidden ? 'show' : 'hide';
+
+            fresh.addEventListener('click', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                const hidden = rows[0] && getComputedStyle(rows[0]).display === 'none';
+                setHidden(!hidden);
+                fresh.textContent = hidden ? 'hide' : 'show';
+            });
+        });
     }
 
     /* -------------------------------------------------------------------------
