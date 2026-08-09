@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.5
+// @version      1.0.6
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -132,8 +132,11 @@
       const head = (box.querySelector('.head')?.textContent || '').replace(/\s+/g, ' ').trim();
       if (!/Discuss/i.test(head)) continue;
 
-      const link = [...box.querySelectorAll('a[href]')]
-        .find(a => !/^javascript:/i.test(a.getAttribute('href') || ''));
+      const links = [...box.querySelectorAll('a[href]')]
+        .filter(a => !/^javascript:/i.test(a.getAttribute('href') || ''));
+      const link = links.find(a => /forums\.php/i.test(a.getAttribute('href') || '') && /viewthread/i.test(a.getAttribute('href') || '')) ||
+                   links.find(a => /Discuss/i.test(a.textContent || '') && !/del_topicid|remove/i.test(a.getAttribute('href') || '')) ||
+                   links.find(a => !/del_topicid|remove/i.test(a.getAttribute('href') || ''));
       if (link) {
         return {
           href: link.href,
