@@ -5286,6 +5286,7 @@ body:has(#lightbox[style*="display: block"]) #content{
   display:flex !important;
   align-items:center !important;
   justify-content:space-between !important;
+  gap:14px !important;
   min-height:38px !important;
   margin:0 !important;
   padding:10px 16px !important;
@@ -5296,6 +5297,27 @@ body:has(#lightbox[style*="display: block"]) #content{
   font-weight:800 !important;
   letter-spacing:0 !important;
   text-transform:none !important;
+}
+
+.btn-collector-header-controls{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:10px !important;
+  margin-left:auto !important;
+}
+
+.btn-collector-toggle{
+  display:inline-flex !important;
+  align-items:center !important;
+  gap:7px !important;
+  color:var(--swift-tertiary) !important;
+  font-size:.72rem !important;
+  font-weight:820 !important;
+  letter-spacing:.055em !important;
+  text-transform:uppercase !important;
+  cursor:pointer !important;
 }
 
 #series .thin .main_column>.btn-series-collector>form,
@@ -5318,8 +5340,9 @@ body:has(#lightbox[style*="display: block"]) #content{
 #series .thin .main_column>.btn-series-collector tbody,
 #content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector tbody{
   display:grid !important;
-  grid-template-columns:repeat(3,minmax(0,1fr)) !important;
-  gap:7px !important;
+  grid-template-columns:repeat(5,minmax(120px,1fr)) auto !important;
+  gap:10px !important;
+  align-items:end !important;
   width:100% !important;
   background:transparent !important;
 }
@@ -5327,15 +5350,15 @@ body:has(#lightbox[style*="display: block"]) #content{
 #series .thin .main_column>.btn-series-collector tr,
 #content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector tr{
   display:grid !important;
-  grid-template-columns:minmax(70px,.44fr) minmax(0,1fr) !important;
-  align-items:center !important;
-  gap:8px !important;
-  min-height:34px !important;
-  padding:6px 9px !important;
-  border:1px solid rgba(255,255,255,0.08) !important;
-  border-radius:8px !important;
-  background:rgba(7,12,19,0.56) !important;
-  box-shadow:0 1px 0 rgba(255,255,255,0.045) inset !important;
+  grid-template-columns:1fr !important;
+  align-items:start !important;
+  gap:4px !important;
+  min-height:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
 }
 
 #series .thin .main_column>.btn-series-collector td,
@@ -5352,7 +5375,7 @@ body:has(#lightbox[style*="display: block"]) #content{
 #series .thin .main_column>.btn-series-collector td:first-child,
 #content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector td:first-child{
   color:var(--swift-tertiary) !important;
-  font-size:.68rem !important;
+  font-size:.66rem !important;
   font-weight:820 !important;
   letter-spacing:.055em !important;
   text-transform:uppercase !important;
@@ -5363,8 +5386,8 @@ body:has(#lightbox[style*="display: block"]) #content{
   width:100% !important;
   min-width:0 !important;
   max-width:none !important;
-  min-height:28px !important;
-  padding:3px 8px !important;
+  min-height:30px !important;
+  padding:4px 8px !important;
   border:1px solid rgba(255,255,255,0.11) !important;
   border-radius:7px !important;
   background:#0a1017 !important;
@@ -5382,10 +5405,11 @@ body:has(#lightbox[style*="display: block"]) #content{
 #series .thin .main_column>.btn-series-collector tr:has(input[type="submit"]),
 #content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector tr:has(input[type="submit"]){
   display:flex !important;
-  grid-column:1 / -1 !important;
+  grid-column:auto !important;
   justify-content:flex-end !important;
+  align-self:end !important;
   min-height:0 !important;
-  padding:2px 0 0 !important;
+  padding:0 !important;
   border:0 !important;
   background:transparent !important;
   box-shadow:none !important;
@@ -5393,8 +5417,8 @@ body:has(#lightbox[style*="display: block"]) #content{
 
 #series .thin .main_column>.btn-series-collector input[type="submit"],
 #content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector input[type="submit"]{
-  min-height:32px !important;
-  padding:5px 16px !important;
+  min-height:30px !important;
+  padding:4px 16px !important;
   border:1px solid rgba(20,184,232,0.48) !important;
   border-radius:8px !important;
   background:linear-gradient(180deg,rgba(20,184,232,0.25),rgba(20,184,232,0.12)) !important;
@@ -5407,7 +5431,12 @@ body:has(#lightbox[style*="display: block"]) #content{
 @media (max-width:1400px){
   #series .thin .main_column>.btn-series-collector tbody,
   #content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector tbody{
-    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    grid-template-columns:repeat(3,minmax(130px,1fr)) !important;
+  }
+
+  #series .thin .main_column>.btn-series-collector tr:has(input[type="submit"]),
+  #content:has(.main_column>table#discog_table) .thin .main_column>.btn-series-collector tr:has(input[type="submit"]){
+    grid-column:1 / -1 !important;
   }
 }
 

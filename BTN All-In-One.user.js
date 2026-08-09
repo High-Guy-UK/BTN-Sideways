@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BTN All-In-One
 // @namespace    https://broadcasthe.net/
-// @version      1.0.11
+// @version      1.0.12
 // @description  Every BTN userscript rolled into one: Animated Power Logo, Front Page Tidy, Trending Shows, Search Table Toggle, Series Page Declutter, one-line torrent details, Fanart.tv logos, TMDB Recommended Shows, IMDb Parents Guide, Sonarr Integration, and the TMDB Enricher. Each module keeps its own original page scope.
 // @author       Prism16 / you
 // @match        https://broadcasthe.net/*
@@ -715,6 +715,7 @@ mod('Series Page Declutter', onSeries, function () {
             collector.style.setProperty('width', 'auto', 'important');
             collector.style.setProperty('max-width', 'none', 'important');
             collector.style.setProperty('order', '4', 'important');
+            setupCollectorHeaderControls(collector);
             if (fanArt) mainCol.insertBefore(collector, fanArt);
             else mainCol.appendChild(collector);
         }
@@ -737,6 +738,39 @@ mod('Series Page Declutter', onSeries, function () {
         setupTorrentTables();
 
         injectStyle();
+    }
+
+    function setupCollectorHeaderControls(box) {
+        if (box.querySelector('.btn-collector-header-controls')) return;
+
+        const head = box.querySelector(':scope > .head');
+        const form = box.querySelector('form');
+        if (!head || !form) return;
+
+        if (!form.id) form.id = 'btn-series-collector-form';
+
+        const controls = document.createElement('div');
+        controls.className = 'btn-collector-header-controls';
+
+        ['Episode', 'Season'].forEach(labelText => {
+            const row = [...form.querySelectorAll('tr')].find(tr =>
+                new RegExp('^' + labelText + '$', 'i').test((tr.children[0]?.textContent || '').replace(/\s+/g, ' ').trim())
+            );
+            const input = row && row.querySelector('input[type="checkbox"]');
+            if (!input) return;
+
+            input.setAttribute('form', form.id);
+
+            const label = document.createElement('label');
+            label.className = 'btn-collector-toggle';
+            const text = document.createElement('span');
+            text.textContent = labelText;
+            label.append(text, input);
+            controls.appendChild(label);
+            row.remove();
+        });
+
+        if (controls.children.length) head.appendChild(controls);
     }
 
     function tableSeasonNumber(table) {
